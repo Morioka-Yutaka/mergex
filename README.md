@@ -67,6 +67,17 @@ Purpose:    Perform a conditional merge between two SAS datasets with automated 
 
 <img width="488" height="166" alt="Image" src="https://github.com/user-attachments/assets/46b752cb-bfa1-436e-a85c-ba1d358b7045" />  
 
+~~~sas
+   %varconf_merge(
+       ds1=wk1,
+       ds2=wk2,
+       byvars=x,
+       output_ds=merge_output2,
+       in1=1,
+       auto_sort=N
+   );
+~~~
+<img width="762" height="168" alt="Image" src="https://github.com/user-attachments/assets/6fa07e9b-1ed1-48c4-9dae-aee9c2bb800f" />  
 
 ---
  
