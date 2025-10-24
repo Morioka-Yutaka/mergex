@@ -58,6 +58,8 @@ Purpose:    Perform a conditional merge between two SAS datasets with automated 
         auto_sort=N
     );
 ~~~
+
+<img width="179" height="73" alt="Image" src="https://github.com/user-attachments/assets/d83e1c98-935c-4a01-af26-c888c80a7101" />
   
 ---
  
