@@ -60,9 +60,11 @@ Purpose:    Perform a conditional merge between two SAS datasets with automated 
 ~~~
 
 <img width="682" height="158" alt="Image" src="https://github.com/user-attachments/assets/43a3e935-1a7b-4fe1-876c-f40523ef9f9c" />  
-|
-|
-↓   
+
+|  
+|  
+↓    
+
 <img width="488" height="166" alt="Image" src="https://github.com/user-attachments/assets/46b752cb-bfa1-436e-a85c-ba1d358b7045" />  
 
 
