@@ -46,6 +46,7 @@ Purpose:    Perform a conditional merge between two SAS datasets with automated 
       output;
     end;
     run;
+
     %varconf_merge(
         ds1=wk1,
         ds2=wk2,
