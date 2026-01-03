@@ -9,22 +9,22 @@
 ### Version information:
   
 - Package: mergex
-- Version: 0.1.0
-- Generated: 2025-10-24T18:01:19
+- Version: 0.2.0
+- Generated: 2026-01-03T11:19:04
 - Author(s): Yutaka Morioka(sasyupi@gmail.com)
 - Maintainer(s): Yutaka Morioka(sasyupi@gmail.com)
 - License: MIT
-- File SHA256: `F*A811D572DD53C3488195ACCBF8662275B97D84F0AE1690CB6B73026A9F8761C0` for this version
-- Content SHA256: `C*165136E7A80B05D1BE762D2714BCB8BF337658DCE9205E0A49FD73B0B91E5DFF` for this version
+- File SHA256: `F*FFED0B9DF2B6795757934134B1A1CF93B1052BAFAD2CE4FBE5D918B0F8002C50` for this version
+- Content SHA256: `C*2C4E070C5A457AC427AF24B1AD83660025AE0FE20E78D3B89E47766304BC0753` for this version
   
 ---
  
-# The `mergex` package, version: `0.1.0`;
+# The `mergex` package, version: `0.2.0`;
   
 ---
  
 MERGEX is a package that enables non-standard or unconventional joins not easily handled or supported by standard SAS syntax.
-It currently implements variable-name conflict-safe joins, and will support rolling joins and other advanced join types in future releases.
+It currently implements variable-name conflict-safe joins, and   rolling joins .
   
 ---
  
@@ -46,14 +46,165 @@ Required SAS Components:
 # The `mergex` package content
 The `mergex` package consists of the following content:
  
-1. [`%varconf_merge()` macro ](#varconfmerge-macro-1 )
+1. [`%rolling_match()` macro ](#rollingmatch-macro-1 )
+2. [`%varconf_merge()` macro ](#varconfmerge-macro-2 )
   
  
-2. [License note](#license)
+3. [License note](#license)
   
 ---
  
-## `%varconf_merge()` macro <a name="varconfmerge-macro-1"></a> ######
+## `%rolling_match()` macro <a name="rollingmatch-macro-1"></a> ######
+
+Purpose  
+- Performs rolling (as-of) matching from a master dataset to the current DATA step observation.  
+- For each current record, finds the best-matching record(s) in the master dataset within the same key group, using a time-like variable (rollvar).  
+- Retrieves one or more variables (var=) from the matched master record and assigns them to the current Data step (PDV).  .  
+
+How matching works (conceptual)  
+- The master data are internally prepared with an observation sequence identifier (___row_number) to provide deterministic tie-breaking.  
+- The macro scans candidate master records within the same key group and determines a winner based on rolltype= and distance limits.  
+- Ties (same direction and same distance) are resolved by choosing the record with the smallest original master observation number (earliest stored observation).  
+- Optionally emits a WARNING message when ties/duplicates are encountered (dupWARN=Y).  
+
+Parameters  
+- master= (required)  
+  Master dataset to be searched (e.g., B). This dataset supplies the matched values.  
+
+- key= (required)  
+  One or more key variables used to define matching groups (space-delimited list).  
+  Examples: key=ID  /  key=STUDYID USUBJID  /  key=SITEID SUBJID VISITNUM  
+
+- rollvar= (required)  
+  The time-like variable used for rolling logic. Typically numeric (e.g., datetime, date, visit day, time).  
+  The current DATA step dataset must have rollvar present; the master dataset must also contain rollvar.  
+
+- rolltype= (optional, default=BACK)  
+  Rolling direction / strategy. Allowed values: BACK, FORWARD, NEAREST.  
+  BACK:  
+    Selects the closest prior value (master.rollvar <= current.rollvar).  
+    Distance is defined as diff = current.rollvar - master.rollvar (diff >= 0).  
+  FORWARD:  
+    Selects the closest subsequent value (master.rollvar >= current.rollvar).  
+    Distance is defined as diff = current.rollvar - master.rollvar (diff <= 0).  
+  NEAREST:  
+    Selects the closest value in either direction (minimize abs(diff)).  
+    If both past and future candidates are equidistant, the preferred direction can be controlled by nearest_tie_dir=.  
+
+- roll_back_limit= (optional, default blank = no limit)  
+  Maximum allowed backward distance for BACK and NEAREST.  
+  Interpreted on diff = current - master (diff >= 0).  
+  Candidate must satisfy: 0 <= diff <= roll_back_limit.  
+  If blank, no backward distance limit is applied.  
+
+- roll_forward_limit= (optional, default blank = no limit)  
+  Maximum allowed forward distance for FORWARD and NEAREST.  
+  Interpreted on diff = current - master (diff <= 0).  
+  Candidate must satisfy: -roll_forward_limit <= diff <= 0.  
+  If blank, no forward distance limit is applied.  
+
+- var= (required)  
+  One or more variables to retrieve from the matched master record (space-delimited list).  
+  These variables are created/overwritten in the current DATA step PDV.  
+  Examples: var=VAL  /  var=VAL FLAG  /  var=LABVAL LABUNIT  
+
+- wh= (optional, default blank)  
+  WHERE condition applied to the master dataset when building the internal lookup view.  
+  This parameter is intended to be used with macro masking functions such as %nrbquote().  
+  The condition is inserted verbatim into a DATA step WHERE statement.  
+  Typical usage examples:  
+    wh=%nrbquote(SEX="F")  
+    wh=%nrbquote(ANLFL='Y')  
+    wh=%nrbquote(not missing(VAL))   
+
+- nearest_tie_dir= (optional, default=BACK)  
+  Applies only when rolltype=NEAREST and a past candidate and a future candidate are equidistant.  
+  Allowed values: BACK, FORWARD.  
+  BACK:  prefer the past candidate (diff > 0) over the future candidate (diff < 0).  
+  FORWARD: prefer the future candidate (diff < 0) over the past candidate (diff > 0).  
+  Note: This does not change tie-breaking within the same direction; those ties are always resolved by earliest master observation number.  
+
+- dupWARN= (optional, default=Y)  
+  Controls whether a WARNING message is written to the log when ties/duplicate candidates are detected.  
+  Y: write WARNING lines via PUT statements.  
+  N: suppress WARNING output.  
+
+Outputs / side effects  
+- The macro does not create a standalone output dataset by itself; it operates within a DATA step and populates var= in the current PDV.  
+- Temporary internal views are created and dropped automatically.  
+- When no match is found, the requested var= variables are set to missing.  
+- When dupWARN=Y, warning messages may appear in the SAS log for tied candidates.  
+
+Usage examples  
+1) Basic BACK (default) with no distance limit  
+data out_back;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL);  
+run;  
+
+2) BACK with a backward distance limit (e.g., within 3 units)  
+data out_back_lim;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, roll_back_limit=3, var=VAL);  
+run;  
+
+3) FORWARD with a forward distance limit (e.g., within 5 units)  
+data out_fwd_lim;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=FORWARD, roll_forward_limit=5, var=VAL);  
+run;  
+
+4) NEAREST with default tie direction (BACK: prefer past when equidistant)  
+data out_nearest_back;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL);  
+run;  
+
+5) NEAREST preferring future when equidistant  
+data out_nearest_fwd;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, nearest_tie_dir=FORWARD);  
+run;  
+
+6) NEAREST with symmetric limits (both past and future constrained)  
+data out_nearest_lim;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, roll_back_limit=3, roll_forward_limit=5);  
+run;  
+
+7) Restrict master candidates with wh= (example: only non-missing values)  
+data out_wh;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL, wh=(not missing(VAL)));  
+run;  
+
+8) Retrieve multiple variables from master  
+data out_multi;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL OTHERFLAG);  
+run;  
+
+9) Composite keys (multiple key variables)  
+data out_keys;  
+  set A2;  
+  %rolling_match(master=B2, key=STUDYID USUBJID, rollvar=ADY, rolltype=NEAREST, var=PARAMCD AVAL, nearest_tie_dir=BACK);  
+run;  
+
+10) Suppress duplicate/tie warnings  
+data out_nowarn;  
+  set A;  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, dupWARN=N);  
+run;  
+
+Notes  
+- Ensure that rollvar has comparable scale/units between the current dataset and the master dataset.  
+- Ensure that key variables uniquely define intended matching groups; ties may occur if the master contains duplicate candidates at the same distance.  
+- The macro is intended to be invoked inside a DATA step (it uses PDV and hash objects).
+
+  
+---
+ 
+## `%varconf_merge()` macro <a name="varconfmerge-macro-2"></a> ######
 
 Macro Name:    %varconf_merge()
  Purpose:    Perform a conditional merge between two SAS datasets with automated variable conflict handling.
