@@ -93,7 +93,7 @@ data out_back;
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL);  
 run;  
-~~~sas
+~~~
 2) BACK with a backward distance limit (e.g., within 3 units)
 ~~~sas
 data out_back_lim;  
