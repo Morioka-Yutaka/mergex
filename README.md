@@ -115,6 +115,7 @@ run;
 <img width="251" height="133" alt="image" src="https://github.com/user-attachments/assets/552f5968-a333-4488-b96c-845f1adfb768" />
 
   
+  
 1) Basic BACK (default) with no distance limit
 ~~~sas
 data out_back;  
@@ -124,6 +125,7 @@ run;
 ~~~
 <img width="253" height="132" alt="image" src="https://github.com/user-attachments/assets/378156d3-1daf-4680-b4a0-409689a0200f" />  
 
+    
 2) BACK with a backward distance limit (e.g., within 3 units)
 ~~~sas
 data out_back_lim;  
