@@ -133,57 +133,54 @@ data out_back_lim;
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, roll_back_limit=3, var=VAL);  
 run;  
 ~~~
-3) FORWARD with a forward distance limit (e.g., within 5 units)
+<img width="190" height="128" alt="image" src="https://github.com/user-attachments/assets/bbc805b7-ec46-4a1c-ab77-4b77b59cd112" />
+
+#### 3) FORWARD with a forward distance limit (e.g., within 5 units)
 ~~~sas
 data out_fwd_lim;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=FORWARD, roll_forward_limit=5, var=VAL);  
 run;  
 ~~~
-4) NEAREST with default tie direction (BACK: prefer past when equidistant)
+<img width="188" height="128" alt="image" src="https://github.com/user-attachments/assets/f6e2c9e8-7fe0-4ce7-9711-85e2d7e678d2" />
+
+#### 4) NEAREST with default tie direction (BACK: prefer past when equidistant)
 ~~~sas
 data out_nearest_back;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL);  
 run;  
 ~~~
-5) NEAREST preferring future when equidistant
+<img width="189" height="130" alt="image" src="https://github.com/user-attachments/assets/6a7fef36-3869-47d7-96c4-204f288bcd46" />
+
+#### 5) NEAREST preferring future when equidistant
 ~~~sas
 data out_nearest_fwd;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, nearest_tie_dir=FORWARD);  
 run;  
 ~~~
-6) NEAREST with symmetric limits (both past and future constrained)
+<img width="199" height="133" alt="image" src="https://github.com/user-attachments/assets/4a5bf93e-6448-46ef-a897-85972ed06925" />
+
+#### 6) NEAREST with symmetric limits (both past and future constrained)
 ~~~sas
 data out_nearest_lim;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, roll_back_limit=3, roll_forward_limit=5);  
 run;  
 ~~~
-7) Restrict master candidates with wh= (example: only non-missing values)
+<img width="192" height="131" alt="image" src="https://github.com/user-attachments/assets/56767f30-6084-4ddd-b757-ee1bcbc1005c" />
+
+#### 7) Restrict master candidates with wh= (example: only non-missing values)
 ~~~sas
 data out_wh;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL, wh=%nrbquote(not missing(VAL)));  
 run;  
 ~~~
-8) Retrieve multiple variables from master
-~~~sas
-data out_multi;  
-  set A;  
-  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL OTHERFLAG);  
-run;  
-~~~
-9) Composite keys (multiple key variables)
-~~~sas
-data out_keys;  
-  set A2;  
-  %rolling_match(master=B2, key=STUDYID USUBJID, rollvar=ADY, rolltype=NEAREST, var=PARAMCD AVAL, nearest_tie_dir=BACK);  
-run;  
-~~~
+<img width="188" height="131" alt="image" src="https://github.com/user-attachments/assets/fb107f4f-fe18-42bd-9fbb-ecb4651e946d" />
 
-10) Suppress duplicate/tie warnings
+#### 8) Suppress duplicate/tie warnings
 ~~~sas
 data out_nowarn;  
   set A;  
@@ -195,7 +192,6 @@ Notes
 - Ensure that rollvar has comparable scale/units between the current dataset and the master dataset.  
 - Ensure that key variables uniquely define intended matching groups; ties may occur if the master contains duplicate candidates at the same distance.  
 - The macro is intended to be invoked inside a DATA step (it uses PDV and hash objects).
-
   
 ---
 
