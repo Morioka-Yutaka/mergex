@@ -6,18 +6,18 @@ It currently implements variable-name conflict-safe joins, and rolling joins .
 
 ## `%rolling_match()` macro <a name="rollingmatch-macro-1"></a> ######
 
-Purpose  
+### Purpose  
 - Performs rolling (as-of) matching from a master dataset to the current DATA step observation.  
 - For each current record, finds the best-matching record(s) in the master dataset within the same key group, using a time-like variable (rollvar).  
 - Retrieves one or more variables (var=) from the matched master record and assigns them to the current Data step (PDV).  .  
 
-How matching works (conceptual)  
+### How matching works (conceptual)  
 - The master data are internally prepared with an observation sequence identifier (___row_number) to provide deterministic tie-breaking.  
 - The macro scans candidate master records within the same key group and determines a winner based on rolltype= and distance limits.  
 - Ties (same direction and same distance) are resolved by choosing the record with the smallest original master observation number (earliest stored observation).  
 - Optionally emits a WARNING message when ties/duplicates are encountered (dupWARN=Y).  
 
-Parameters  
+### Parameters  
 ~~~text
 - master= (required)  
   Master dataset to be searched (e.g., B). This dataset supplies the matched values.  
@@ -80,13 +80,41 @@ Parameters
   Y: write WARNING lines via PUT statements.  
   N: suppress WARNING output.  
 ~~~
-Outputs / side effects  
+### Outputs / side effects  
 - The macro does not create a standalone output dataset by itself; it operates within a DATA step and populates var= in the current PDV.  
 - Temporary internal views are created and dropped automatically.  
 - When no match is found, the requested var= variables are set to missing.  
 - When dupWARN=Y, warning messages may appear in the SAS log for tied candidates.  
 
-Usage examples  
+### Usage examples  
+#### Test Data
+~~~sas
+data A;
+ID=1;TIME=-1;output;
+ID=1;TIME=2;output;
+ID=1;TIME=5;output;
+ID=1;TIME=10;output;
+ID=2;TIME=2;output;
+ID=2;TIME=5;output;
+ID=2;TIME=10;output;
+ID=2;TIME=16;output;
+run;
+
+data B;
+ID=1;TIME=4;VAL="B";VAL2=1;output;
+ID=1;TIME=1;VAL="A";VAL2=2;output;
+ID=1;TIME=6;VAL="C";VAL2=3;output;
+ID=1;TIME=10;VAL="D";VAL2=4;output;
+ID=2;TIME=2;VAL="E";VAL2=10;output;
+ID=2;TIME=5;VAL="F";VAL2=10;output;
+ID=2;TIME=10;VAL="G";VAL2=30;output;
+ID=2;TIME=10;VAL="H";VAL2=40;output;
+run;
+~~~
+<img width="172" height="132" alt="image" src="https://github.com/user-attachments/assets/88f9aa06-eebb-4e0c-83c2-4162b4f44df1" />
+<img width="251" height="133" alt="image" src="https://github.com/user-attachments/assets/552f5968-a333-4488-b96c-845f1adfb768" />
+
+
 1) Basic BACK (default) with no distance limit
 ~~~sas
 data out_back;  
