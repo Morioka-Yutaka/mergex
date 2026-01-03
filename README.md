@@ -85,7 +85,7 @@ Purpose:    Perform a conditional merge between two SAS datasets with automated 
  
 
 ## Notes on versions history
-- 0.2.0(05December2025): Add Rolling match.
+- 0.2.0(05December2026): Add Rolling match.
 - 0.1.0(24October2025): Initial version.
 
 ---
