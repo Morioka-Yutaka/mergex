@@ -18,6 +18,7 @@ How matching works (conceptual)
 - Optionally emits a WARNING message when ties/duplicates are encountered (dupWARN=Y).  
 
 Parameters  
+~~~text
 - master= (required)  
   Master dataset to be searched (e.g., B). This dataset supplies the matched values.  
 
@@ -78,7 +79,7 @@ Parameters
   Controls whether a WARNING message is written to the log when ties/duplicate candidates are detected.  
   Y: write WARNING lines via PUT statements.  
   N: suppress WARNING output.  
-
+~~~
 Outputs / side effects  
 - The macro does not create a standalone output dataset by itself; it operates within a DATA step and populates var= in the current PDV.  
 - Temporary internal views are created and dropped automatically.  
@@ -86,65 +87,77 @@ Outputs / side effects
 - When dupWARN=Y, warning messages may appear in the SAS log for tied candidates.  
 
 Usage examples  
-1) Basic BACK (default) with no distance limit  
+1) Basic BACK (default) with no distance limit
+~~~sas
 data out_back;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL);  
 run;  
-
-2) BACK with a backward distance limit (e.g., within 3 units)  
+~~~sas
+2) BACK with a backward distance limit (e.g., within 3 units)
+~~~sas
 data out_back_lim;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, roll_back_limit=3, var=VAL);  
 run;  
-
-3) FORWARD with a forward distance limit (e.g., within 5 units)  
+~~~
+3) FORWARD with a forward distance limit (e.g., within 5 units)
+~~~sas
 data out_fwd_lim;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=FORWARD, roll_forward_limit=5, var=VAL);  
 run;  
-
-4) NEAREST with default tie direction (BACK: prefer past when equidistant)  
+~~~
+4) NEAREST with default tie direction (BACK: prefer past when equidistant)
+~~~sas
 data out_nearest_back;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL);  
 run;  
-
-5) NEAREST preferring future when equidistant  
+~~~
+5) NEAREST preferring future when equidistant
+~~~sas
 data out_nearest_fwd;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, nearest_tie_dir=FORWARD);  
 run;  
-
-6) NEAREST with symmetric limits (both past and future constrained)  
+~~~
+6) NEAREST with symmetric limits (both past and future constrained)
+~~~sas
 data out_nearest_lim;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, roll_back_limit=3, roll_forward_limit=5);  
 run;  
-
-7) Restrict master candidates with wh= (example: only non-missing values)  
+~~~
+7) Restrict master candidates with wh= (example: only non-missing values)
+~~~sas
 data out_wh;  
   set A;  
-  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL, wh=(not missing(VAL)));  
+  %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL, wh=%nrbquote(not missing(VAL)));  
 run;  
-
-8) Retrieve multiple variables from master  
+~~~
+8) Retrieve multiple variables from master
+~~~sas
 data out_multi;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=BACK, var=VAL OTHERFLAG);  
 run;  
-
-9) Composite keys (multiple key variables)  
+~~~
+9) Composite keys (multiple key variables)
+~~~sas
 data out_keys;  
   set A2;  
   %rolling_match(master=B2, key=STUDYID USUBJID, rollvar=ADY, rolltype=NEAREST, var=PARAMCD AVAL, nearest_tie_dir=BACK);  
 run;  
+~~~
 
-10) Suppress duplicate/tie warnings  
+10) Suppress duplicate/tie warnings
+~~~sas
 data out_nowarn;  
   set A;  
   %rolling_match(master=B, key=ID, rollvar=TIME, rolltype=NEAREST, var=VAL, dupWARN=N);  
 run;  
+~~~
 
 Notes  
 - Ensure that rollvar has comparable scale/units between the current dataset and the master dataset.  
