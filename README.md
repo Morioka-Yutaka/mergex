@@ -116,7 +116,7 @@ run;
 
   
   
-1) Basic BACK (default) with no distance limit
+#### 1) Basic BACK (default) with no distance limit
 ~~~sas
 data out_back;  
   set A;  
@@ -126,7 +126,7 @@ run;
 <img width="253" height="132" alt="image" src="https://github.com/user-attachments/assets/378156d3-1daf-4680-b4a0-409689a0200f" />  
 
     
-2) BACK with a backward distance limit (e.g., within 3 units)
+#### 2) BACK with a backward distance limit (e.g., within 3 units)
 ~~~sas
 data out_back_lim;  
   set A;  
